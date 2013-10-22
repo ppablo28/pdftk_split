@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Author: Paweł Parafiński
+# Date: 22.10.2013
+# Email: ppablo28@gmail.com
+
 # Default number of pages for each PDF file
 DEFAULT_NUM=20
 
@@ -11,32 +15,40 @@ function usage {
     echo -e "\t-f - the source file"
 }
 
+# Get file name from the input
+function getFileName {
+    tmp=$1
+    tmp=${tmp##*/}
+    FILE_BASE=${tmp%%.*}
+}
+
 # Read arguments
 function readArgs {
-    flag_1=false
-    flag_2=false
+    flag_N=false
+    flag_F=false
     while getopts ":n:f:" opt
     do
         case $opt in
             n)
-                re='^[1-9][0-9]+$'
+                re='^[1-9][0-9]*$'
                 if ! [[ $OPTARG =~ $re ]] ; then
                    usage; exit 1
                 fi
-                flag_1=true
+                flag_N=true
                 DEFAULT_NUM=$OPTARG;;
             f)
                 re='^.*.pdf$'
                 if ! [[ $OPTARG =~ $re ]] ; then
                     usage; exit 1
                 fi
-                flag_2=true
-                FILE=$OPTARG;;
+                flag_F=true
+                FILE=$OPTARG
+                getFileName $FILE;;
             \?)
                 echo "Invalid option -$OPTARG"; exit 1;;
         esac
     done
-    if ! ($flag_1 && $flag_2); then 
+    if ! ($flag_N && $flag_F); then 
         echo "Arguments -f and -n with parameters are required!"; exit 1
     fi
 }
@@ -61,16 +73,16 @@ for i in $(eval echo {0..$(($ITER_NUM - 1))})
 do
     FIRST=$(($DEFAULT_NUM * $i + 1))
     LAST=$(($DEFAULT_NUM * ($i + 1)))
-    echo "Saving file: $FIRST-$LAST.pdf"
-    `pdftk $FILE cat $FIRST-$LAST output $FIRST-$LAST.pdf dont_ask`
+    echo "Saving file: ${FILE_BASE}_$FIRST-$LAST.pdf"
+    `pdftk $FILE cat $FIRST-$LAST output ${FILE_BASE}_$FIRST-$LAST.pdf dont_ask`
 done
 
 # Save the rest of the file
 if [ $LAST -lt $NUM_OF_PAGES ]
 then
     LAST=$(($LAST + 1))
-    echo "Saving file: $LAST-$NUM_OF_PAGES.pdf"
-    `pdftk $FILE cat $LAST-end output $LAST-$NUM_OF_PAGES.pdf dont_ask`
+    echo "Saving file: ${FILE_BASE}_$LAST-$NUM_OF_PAGES.pdf"
+    `pdftk $FILE cat $LAST-end output ${FILE_BASE}_$LAST-$NUM_OF_PAGES.pdf dont_ask`
 fi
 
 
